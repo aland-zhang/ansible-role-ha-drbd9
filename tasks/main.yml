@@ -40,3 +40,20 @@
       - "/tmp/linstor-satellite-0.7.3-1.el7.centos.noarch.rpm"
       - "/tmp/python-linstor-0.7.3-1.noarch.rpm"
     state: present
+
+- name: parted drbd device
+  parted:
+    device: /dev/sdb
+    number: 1
+    state: present
+
+- name: Create drbd-vg1
+  lvg:
+    vg: drbd-vg1
+    pvs: /dev/sdb1
+
+- name: start drbd
+  systemd:
+    name: drbd
+    state: started
+    enabled: yes
