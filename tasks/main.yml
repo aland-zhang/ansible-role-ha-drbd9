@@ -49,11 +49,23 @@
 
 - name: Create drbd-vg1
   lvg:
-    vg: drbd-vg1
+    vg: drbdpool
     pvs: /dev/sdb1
 
 - name: start drbd
   systemd:
     name: drbd
+    state: started
+    enabled: yes
+
+- name: start linstor-controller
+  systemd:
+    name: linstor-controller
+    state: started
+    enabled: yes
+
+- name: start linstor-satellite
+  systemd:
+    name: linstor-satellite
     state: started
     enabled: yes
