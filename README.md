@@ -1,8 +1,7 @@
-ansible-role-drbd9
+ansible-role-ha-drbd9
 =========
 
-CentOSのDRBD9環境を設定するAnsible Roleです。
-
+CentOSのkeepalived + DRBD9 + NFS server環境を構築するAnsible Roleです。
 
 依存関係(Dependencies)
 ------------

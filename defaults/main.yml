@@ -1,2 +1,8 @@
 ---
-# defaults file for ansible-role-drbd9
+# defaults file for ansible-role-ha-drbd9
+
+ha_drbd_disk: /dev/sdb
+ha_drbd_master_node_name: VM1
+ha_drbd_master_node_address: "192.168.33.10"
+ha_drbd_slave_node_name:  VM2
+ha_drbd_slave_node_address:  "192.168.33.20"

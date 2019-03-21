@@ -1,5 +1,19 @@
 ---
-# tasks file for ansible-role-drbd9
+
+# ----- set drbd device -----
+
+- name: parted drbd disk
+  parted:
+    device: "{{ ha_drbd_disk }}"
+    number: 1
+    state: present
+
+- name: Create drbd-vg1
+  lvg:
+    vg: drbdpool
+    pvs: "{{ ha_drbd_disk }}1"
+
+# ----- set drbd9 -----
 
 - name: import RPM-GPG-KEY-elrepo
   rpm_key:
@@ -20,52 +34,29 @@
     state: present
   tags: drbd9
 
-- name: cp LINSTOR packages
-  copy: 
-    src: "{{ item }}"
-    dest: /tmp/
-  with_items:
-    - "rpm/linstor-client-0.7.3-1.noarch.rpm"
-    - "rpm/linstor-common-0.7.3-1.el7.centos.noarch.rpm"
-    - "rpm/linstor-controller-0.7.3-1.el7.centos.noarch.rpm"
-    - "rpm/linstor-satellite-0.7.3-1.el7.centos.noarch.rpm"
-    - "rpm/python-linstor-0.7.3-1.noarch.rpm"
+- name: deploy drbd1.res
+  template:
+    src: "drbd1.res.j2"
+    dest: "/etc/drbd.d/drbd1.res"
+    owner: "root"
+    group: "root"
+    mode: 0644    
 
-- name: install LINSTOR packages
-  yum: 
-    name:
-      - "/tmp/linstor-client-0.7.3-1.noarch.rpm"
-      - "/tmp/linstor-common-0.7.3-1.el7.centos.noarch.rpm"
-      - "/tmp/linstor-controller-0.7.3-1.el7.centos.noarch.rpm"
-      - "/tmp/linstor-satellite-0.7.3-1.el7.centos.noarch.rpm"
-      - "/tmp/python-linstor-0.7.3-1.noarch.rpm"
+- name: deploy global_common.conf
+  copy:
+    src: "global_common.conf"
+    dest: "/etc/drbd.d/global_common.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: 
+
+
+# ----- set keepalived -----
+
+- name: install keepalived
+  yum:
+    name: keepalived
     state: present
-
-- name: parted drbd device
-  parted:
-    device: /dev/sdb
-    number: 1
-    state: present
-
-- name: Create drbd-vg1
-  lvg:
-    vg: drbdpool
-    pvs: /dev/sdb1
-
-- name: start drbd
-  systemd:
-    name: drbd
-    state: started
-    enabled: yes
-
-- name: start linstor-controller
-  systemd:
-    name: linstor-controller
-    state: started
-    enabled: yes
-
-- name: start linstor-satellite
-  systemd:
-    name: linstor-satellite
-    state: started
-    enabled: yes
+  tags: keepalived
