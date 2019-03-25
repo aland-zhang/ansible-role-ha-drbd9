@@ -1,0 +1,36 @@
+#!/bin/bash
+
+TYPE=$1   # MASTER or BACKUP
+
+DEVICE=/dev/drbd1
+MOUNT_DIR={{ ha_drbd_mount_dir }}
+
+drbd_primary() {
+        drbdadm primary r0
+        mount | grep -q $DEVICE
+        [ $? = 1 ] && mount -t xfs $DEVICE $MOUNT_DIR
+        /bin/systemctl is-active nfs-server
+        [ $? != 0 ] && /bin/systemctl restart nfs-server
+}
+
+drbd_secondary() {
+        mount | grep -q $DEVICE
+        [ $? = 0 ] && umount $MOUNT_DIR
+        drbdadm secondary r0
+        /bin/systemctl is-active nfs-server
+        [ $? != 3 ] && /bin/systemctl stop nfs-server
+}
+
+case $TYPE in
+        "MASTER")
+                drbd_primary
+                exit 0
+                ;;
+        "BACKUP")
+                drbd_secondary
+                exit 0
+                ;;
+        *)      echo "unknown state"
+                exit 1
+                ;;
+esac

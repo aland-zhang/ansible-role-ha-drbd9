@@ -1,0 +1,23 @@
+#!/bin/bash
+
+EXIT_CODE=0
+
+STATUS_FILE=/var/lib/drbd.status
+
+STATUS=$(sed -e 's/.* state:\(.*\)$/\1/' $STATUS_FILE)
+if [ "${STATUS}" != "MASTER" ]; then
+        echo "current status is ${STATUS}. skip"
+        exit
+fi
+
+DRBD_ROLE_STATUS=$(/sbin/drbdadm role r0 | cut -d '/' -f1)
+DRBD_DSTATE_STATUS=$(/sbin/drbdadm dstate r0 | cut -d '/' -f1)
+DRBD_CSTATE_STATUS=$(/sbin/drbdadm cstate r0)
+
+[ "${DRBD_ROLE_STATUS}" != "Primary" ] && EXIT_CODE=1
+#[ "${DRBD_DSTATE_STATUS}" != "UpToDate" ] && EXIT_CODE=2
+#[ "${DRBD_CSTATE_STATUS}" != "Connected" ] && EXIT_CODE=3
+
+echo "$(date +'%Y/%m/%d %H:%M:%S') check_drbd role:${DRBD_ROLE_STATUS} dstate:${DRBD_DSTATE_STATUS} cstate:${DRBD_CSTATE_STATUS} exit:${EXIT_CODE}" >> /var/log/check_drbd.log
+
+exit $EXIT_CODE

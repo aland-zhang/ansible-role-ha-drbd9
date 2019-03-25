@@ -50,8 +50,33 @@
     group: "root"
     mode: 0644
 
-- name: 
+- name: make drbd mount directory 
+  file:
+    path: "{{ ha_drbd_mount_dir }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
 
+- name: create drbd meta r1
+  command: "/usr/sbin/drbdadm create-md r1 --force"
+  when: ha_drbd_initialize == true
+
+- name: drbdadm up r1
+  command: "/usr/sbin/drbdadm up r1"
+  when: ha_drbd_initialize == true
+
+- name: drbdadm new-current-uuid --clear-bitmap r1
+  command: "/usr/sbin/drbdadm new-current-uuid --clear-bitmap r1"
+  when:
+    - ha_drbd_initialize == true
+    - ha_drbd_role == "primary"
+
+- name: mkfs.xfs -f /dev/drbd1
+  command: "/usr/sbin/mkfs.xfs -f /dev/drbd1"
+  when: 
+    - ha_drbd_initialize == true
+    - ha_drbd_role == "primary"
 
 # ----- set keepalived -----
 
@@ -60,3 +85,23 @@
     name: keepalived
     state: present
   tags: keepalived
+
+- name: config keepalived.conf
+  template:
+    src: "keepalived.conf.j2"
+    dest: "/etc/keepalived/keepalived.conf"
+    owner: "root"
+    group: "root"
+    mode: 0644
+
+- name: deploy keepalived_script
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "root"
+    group: "root"
+    mode: 0755
+  with_items:
+    - { src: 'keepalived_script/check_drbd.sh.j2',dest: '/usr/local/bin/check_drbd.sh' }
+    - { src: 'keepalived_script/ctrl_drbd.sh.j2',dest: '/usr/local/bin/ctrl_drbd.sh' }
+    - { src: 'keepalived_script/save_drbd_status.sh.j2',dest: '/usr/local/bin/save_drbd_status.sh' }

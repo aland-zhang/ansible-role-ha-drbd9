@@ -1,0 +1,7 @@
+#!/bin/bash
+
+TYPE=$1   # "GROUP" or "INSTANCE"
+NAME=$2   # name of group or instance
+STATE=$3  # target state of transition ("MASTER", "BACKUP", "FAULT")
+
+echo "$(date +'%Y/%m/%d %H:%M:%S') type:${TYPE} name:${NAME} state:${STATE}" > /var/lib/drbd.status

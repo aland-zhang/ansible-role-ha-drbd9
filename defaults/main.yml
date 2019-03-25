@@ -6,3 +6,12 @@ ha_drbd_master_node_name: VM1
 ha_drbd_master_node_address: "192.168.33.10"
 ha_drbd_slave_node_name:  VM2
 ha_drbd_slave_node_address:  "192.168.33.20"
+ha_drbd_initialize: false
+ha_drbd_role: #primary or secondary
+ha_drbd_mount_dir: /data/drbd1
+
+ha_drbd_vrrp_interface: enp0s8
+ha_drbd_vrrp_priority: 150 #primary=150 secondary=149
+ha_drbd_virtual_ipaddress: "192.168.33.30"
+ha_drbd_unicast_address1: "192.168.33.10"
+ha_drbd_unicast_address2: "192.168.33.20"
