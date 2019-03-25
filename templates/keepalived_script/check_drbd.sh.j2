@@ -10,9 +10,9 @@ if [ "${STATUS}" != "MASTER" ]; then
         exit
 fi
 
-DRBD_ROLE_STATUS=$(/sbin/drbdadm role r0 | cut -d '/' -f1)
-DRBD_DSTATE_STATUS=$(/sbin/drbdadm dstate r0 | cut -d '/' -f1)
-DRBD_CSTATE_STATUS=$(/sbin/drbdadm cstate r0)
+DRBD_ROLE_STATUS=$(/sbin/drbdadm role r1 | cut -d '/' -f1)
+DRBD_DSTATE_STATUS=$(/sbin/drbdadm dstate r1 | cut -d '/' -f1)
+DRBD_CSTATE_STATUS=$(/sbin/drbdadm cstate r1)
 
 [ "${DRBD_ROLE_STATUS}" != "Primary" ] && EXIT_CODE=1
 #[ "${DRBD_DSTATE_STATUS}" != "UpToDate" ] && EXIT_CODE=2

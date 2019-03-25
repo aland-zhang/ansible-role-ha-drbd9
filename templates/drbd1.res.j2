@@ -1,6 +1,6 @@
 resource r1 {
   device    /dev/drbd1;
-  disk      {{ ha_drbd_disk }}1;
+  disk      /dev/vg1/lv-drbd1;
   meta-disk internal;
   on {{ ha_drbd_master_node_name }} {
     address  {{ ha_drbd_master_node_address }}:7788;

@@ -3,7 +3,7 @@ global_defs {
 }
 
 vrrp_script check_drbd {
-    script "/opt/local/bin/check_drbd.sh"
+    script "/usr/local/bin/check_drbd.sh"
     interval 3
     fall 2
     raise 2
@@ -29,10 +29,10 @@ vrrp_instance DRBD {
     track_script {
         check_drbd
     }
-    notify_master "/opt/local/bin/ctrl_drbd.sh MASTER"
-    notify_backup "/opt/local/bin/ctrl_drbd.sh BACKUP"
-    notify_fault  "/opt/local/bin/ctrl_drbd.sh BACKUP"
-    notify_stop   "/opt/local/bin/ctrl_drbd.sh BACKUP"
-    notify        "/opt/local/bin/save_drbd_status.sh"
+    notify_master "/usr/local/bin/ctrl_drbd.sh MASTER"
+    notify_backup "/usr/local/bin/ctrl_drbd.sh BACKUP"
+    notify_fault  "/usr/local/bin/ctrl_drbd.sh BACKUP"
+    notify_stop   "/usr/local/bin/ctrl_drbd.sh BACKUP"
+    notify        "/usr/local/bin/save_drbd_status.sh"
 }
 

@@ -12,6 +12,6 @@ ha_drbd_mount_dir: /data/drbd1
 
 ha_drbd_vrrp_interface: enp0s8
 ha_drbd_vrrp_priority: 150 #primary=150 secondary=149
-ha_drbd_virtual_ipaddress: "192.168.33.30"
+ha_drbd_virtual_ipaddress: "192.168.33.30/24"
 ha_drbd_unicast_address1: "192.168.33.10"
 ha_drbd_unicast_address2: "192.168.33.20"

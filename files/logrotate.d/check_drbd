@@ -1,0 +1,5 @@
+/var/log/check_drbd.log {
+    missingok
+    daily
+    rotate 14
+}

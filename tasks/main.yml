@@ -1,6 +1,6 @@
 ---
 
-# ----- set drbd device -----
+# ----- set DRBD device -----
 
 - name: parted drbd disk
   parted:
@@ -8,23 +8,34 @@
     number: 1
     state: present
 
-- name: Create drbd-vg1
+- name: create drbd-vg1
   lvg:
-    vg: drbdpool
+    vg: vg1
     pvs: "{{ ha_drbd_disk }}1"
 
-# ----- set drbd9 -----
+- name: create logical volume
+  lvol:
+    vg: vg1
+    lv: lv-drbd1
+    size: +100%FREE
+    shrink: no
+
+# ----- set DRBD9 -----
 
 - name: import RPM-GPG-KEY-elrepo
   rpm_key:
     state: present
     key: https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
-  tags: drbd9
+  tags:
+    - drbd9
+    - drbd9-install
 
 - name: install elrepo repository
   yum:
     name: http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
-  tags: drbd9
+  tags:
+    - drbd9
+    - drbd9-install
 
 - name: install drbd9
   yum:
@@ -32,7 +43,9 @@
       - kmod-drbd90
       - drbd90-utils
     state: present
-  tags: drbd9
+  tags:
+    - drbd9
+    - drbd9-install
 
 - name: deploy drbd1.res
   template:
@@ -40,7 +53,8 @@
     dest: "/etc/drbd.d/drbd1.res"
     owner: "root"
     group: "root"
-    mode: 0644    
+    mode: 0644
+  tags: drbd9
 
 - name: deploy global_common.conf
   copy:
@@ -49,6 +63,7 @@
     owner: "root"
     group: "root"
     mode: 0644
+  tags: drbd9
 
 - name: make drbd mount directory 
   file:
@@ -57,26 +72,50 @@
     group: root
     mode: 0755
     state: directory
+  tags: drbd9
 
-- name: create drbd meta r1
-  command: "/usr/sbin/drbdadm create-md r1 --force"
+- block:
+
+  - name: create drbd meta r1
+    command: "/usr/sbin/drbdadm create-md r1 --force"
+
+  - name: drbdadm up r1
+    command: "/usr/sbin/drbdadm up r1"
+
+  - name: drbdadm new-current-uuid --clear-bitmap r1
+    command: "/usr/sbin/drbdadm new-current-uuid --clear-bitmap r1"
+    when: ha_drbd_role == "primary"
+
+  - name: mkfs.xfs -f /dev/drbd1
+    command: "/usr/sbin/mkfs.xfs -f /dev/drbd1"
+    when: ha_drbd_role == "primary"
+
   when: ha_drbd_initialize == true
+  tags: drbd9
 
-- name: drbdadm up r1
-  command: "/usr/sbin/drbdadm up r1"
-  when: ha_drbd_initialize == true
+- name: start drbd service
+  service:
+    name: drbd
+    state: started
+    enabled: yes
+  tags: keepalived
 
-- name: drbdadm new-current-uuid --clear-bitmap r1
-  command: "/usr/sbin/drbdadm new-current-uuid --clear-bitmap r1"
-  when:
-    - ha_drbd_initialize == true
-    - ha_drbd_role == "primary"
+# ----- set NFS server -----
 
-- name: mkfs.xfs -f /dev/drbd1
-  command: "/usr/sbin/mkfs.xfs -f /dev/drbd1"
-  when: 
-    - ha_drbd_initialize == true
-    - ha_drbd_role == "primary"
+- name: install nfs-utils
+  yum:
+    name: nfs-utils
+    state: present
+  tags: nfs-server
+
+- name: deploy /etc/exports
+  template:
+    src: "exports.j2"
+    dest: "/etc/exports"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  tags: nfs-server
 
 # ----- set keepalived -----
 
@@ -93,6 +132,8 @@
     owner: "root"
     group: "root"
     mode: 0644
+  notify: restart keepalived
+  tags: keepalived
 
 - name: deploy keepalived_script
   template:
@@ -105,3 +146,21 @@
     - { src: 'keepalived_script/check_drbd.sh.j2',dest: '/usr/local/bin/check_drbd.sh' }
     - { src: 'keepalived_script/ctrl_drbd.sh.j2',dest: '/usr/local/bin/ctrl_drbd.sh' }
     - { src: 'keepalived_script/save_drbd_status.sh.j2',dest: '/usr/local/bin/save_drbd_status.sh' }
+  notify: restart keepalived
+  tags: keepalived
+
+- name: deploy logrotate check_drbd.log
+  copy:
+    src: "logrotate.d/check_drbd"
+    dest: "/etc/logrotate.d/check_drbd"
+    owner: "root"
+    group: "root"
+    mode: 0644
+  tags: keepalived
+
+- name: start keepalived service
+  service:
+    name: keepalived
+    state: started
+    enabled: yes
+  tags: keepalived
