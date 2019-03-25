@@ -14,10 +14,16 @@ DRBD_ROLE_STATUS=$(/sbin/drbdadm role r1 | cut -d '/' -f1)
 DRBD_DSTATE_STATUS=$(/sbin/drbdadm dstate r1 | cut -d '/' -f1)
 DRBD_CSTATE_STATUS=$(/sbin/drbdadm cstate r1)
 
+NFS_SYSTEMD_STATUS=$(/bin/systemctl is-active nfs-server)
+
 [ "${DRBD_ROLE_STATUS}" != "Primary" ] && EXIT_CODE=1
 #[ "${DRBD_DSTATE_STATUS}" != "UpToDate" ] && EXIT_CODE=2
 #[ "${DRBD_CSTATE_STATUS}" != "Connected" ] && EXIT_CODE=3
 
-echo "$(date +'%Y/%m/%d %H:%M:%S') check_drbd role:${DRBD_ROLE_STATUS} dstate:${DRBD_DSTATE_STATUS} cstate:${DRBD_CSTATE_STATUS} exit:${EXIT_CODE}" >> /var/log/check_drbd.log
+if [ "${EXIT_CODE}" == 0 ] && [ "${NFS_SYSTEMD_STATUS}" != "active" ]; then
+        /bin/systemctl restart nfs-server && EXIT_CODE=1
+fi
+
+echo "$(date +'%Y/%m/%d %H:%M:%S') check_drbd role:${DRBD_ROLE_STATUS} dstate:${DRBD_DSTATE_STATUS} cstate:${DRBD_CSTATE_STATUS} nfsstate:${NFS_SYSTEMD_STATUS} exit:${EXIT_CODE}" >> /var/log/check_drbd.log
 
 exit $EXIT_CODE
